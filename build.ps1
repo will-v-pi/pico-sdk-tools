@@ -10,6 +10,11 @@ param (
   [string]
   $ConfigFile,
 
+  [Parameter(HelpMessage = "SDK Version to build")]
+  [ValidateNotNullOrEmpty()]
+  [string]
+  $Version,
+
   [Parameter(HelpMessage = "Path to MSYS2 installation. MSYS2 will be downloaded and installed to this path if it doesn't exist.")]
   [ValidatePattern('[\\\/]msys64$')]
   [string]
@@ -81,11 +86,16 @@ $ProgressPreference = 'SilentlyContinue'
 
 Write-Host "Building from $ConfigFile"
 
-$version = (Get-Content "$PSScriptRoot\version.txt").Trim()
 $suffix = [io.path]::GetFileNameWithoutExtension($ConfigFile) + ($BuildType -eq 'user' ? '-user' : '' )
 
 $tools = (Get-Content '.\config\tools.json' | ConvertFrom-Json).tools
 $repositories = (Get-Content '.\config\repositories.json' | ConvertFrom-Json).repositories
+if ("" -ne $Version) {
+  Write-Host "Version set to $Version"
+  $repositories[0].tree = $Version
+} else {
+  $version = (Get-Content "$PSScriptRoot\version.txt").Trim()
+}
 $config = Get-Content $ConfigFile | ConvertFrom-Json
 $bitness = $config.bitness
 $mingw_arch = $config.mingwArch
